@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zoha's Private Cinema</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101018;color:#fff;font-family:Arial,sans-serif;padding:20px}
+header{text-align:center;padding:25px 0}
+h1{color:#e8b4ff;margin-bottom:8px}
+p{color:#bbb}
+.card{max-width:650px;margin:20px auto;background:#1c1c29;padding:22px;border-radius:16px}
+input{width:100%;padding:14px;border-radius:9px;border:1px solid #555;background:#101018;color:white;margin:10px 0}
+button{padding:12px 18px;background:#c58af0;color:#170d20;border:0;border-radius:9px;font-weight:bold;cursor:pointer;margin:5px 0}
+video,iframe{width:100%;margin-top:20px;border-radius:12px;background:#000;min-height:220px}
+#message{color:#ffd5a1}
+footer{text-align:center;color:#888;margin:30px 0}
+</style>
+</head>
+<body>
+<header>
+<h1>🎬 Zoha's Private Cinema</h1>
+<p>Your personal video corner</p>
+</header>
+<div class="card">
+<h2>▶ Watch a Video</h2>
+<p>Paste a direct video link or a supported video URL.</p>
+<input id="videoLink" type="url" placeholder="Paste video link here">
+<button onclick="playVideo()">Play Video</button>
+<video id="player" controls playsinline style="display:none"></video>
+<iframe id="embed" style="display:none" allowfullscreen></iframe>
+<p id="message"></p>
+</div>
+<footer>Made for Zoha 🤍</footer>
+<script>
+function playVideo(){
+ const link=document.getElementById('videoLink').value.trim();
+ const player=document.getElementById('player');
+ const embed=document.getElementById('embed');
+ const message=document.getElementById('message');
+ player.style.display='none';
+ embed.style.display='none';
+ player.removeAttribute('src');
+ embed.removeAttribute('src');
+ message.textContent='';
+ if(!link){message.textContent='Please paste a video link.';return;}
+ try{
+  const url=new URL(link);
+  if(url.protocol!=='https:'&&url.protocol!=='http:'){
+   message.textContent='Please use a valid web link.';return;
+  }
+  if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(url.href)){
+   player.src=url.href;
+   player.style.display='block';
+   player.load();
+   player.play().catch(()=>{});
+  }else if(url.hostname==='youtu.be'||url.hostname.endsWith('youtube.com')){
+   let id='';
+   if(url.hostname==='youtu.be') id=url.pathname.slice(1);
+   else if(url.pathname==='/watch') id=url.searchParams.get('v')||'';
+   else if(url.pathname.startsWith('/embed/')) id=url.pathname.split('/')[2];
+   else if(url.pathname.startsWith('/shorts/')) id=url.pathname.split('/')[2];
+   if(!id){message.textContent='This YouTube link format is not supported.';return;}
+   embed.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id);
+   embed.style.display='block';
+  }else{
+   message.textContent='This link may not support playback here. Try a direct MP4 link or a supported YouTube link.';
+  }
+ }catch(e){message.textContent='Please paste a valid video URL.';}
+}
+</script>
+</body>
+  </html>
