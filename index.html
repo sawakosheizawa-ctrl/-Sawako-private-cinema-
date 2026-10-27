@@ -161,3 +161,27 @@
         statusBox.textContent = "Error: " + error.message;
       }
     }
+    function playVideo() {
+      const url = document.getElementById("videoLink").value.trim();
+      const player = document.getElementById("player");
+      const message = document.getElementById("videoStatus");
+
+      if (!url) {
+        message.textContent = "Pehle video link paste karo.";
+        return;
+      }
+
+      player.src = url;
+      player.load();
+      message.textContent = "Video load karne ki koshish ho rahi hai...";
+
+      player.play().catch(function() {
+        message.textContent =
+          "Video nahi chali. Direct video file link try karo.";
+      });
+    }
+
+    loadMovies();
+  </script>
+</body>
+</html>
