@@ -3,123 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>sawako Private Cinema</title>
+
+<title>Sawako's Private Cinema 🎬</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#101018;color:#fff;font-family:Arial,sans-serif;padding:20px}
-header{text-align:center;padding:25px 0}
-h1{color:#e8b4ff;margin-bottom:8px}
-p{color:#bbb}
-.card{max-width:650px;margin:20px auto;background:#1c1c29;padding:22px;border-radius:16px}
-input{width:100%;padding:14px;border-radius:9px;border:1px solid #555;background:#101018;color:white;margin:10px 0}
-button,.openLink{display:inline-block;padding:12px 18px;background:#c58af0;color:#170d20;border:0;border-radius:9px;font-weight:bold;cursor:pointer;margin:5px 0;text-decoration:none}
-video,iframe{width:100%;margin-top:20px;border-radius:12px;background:#000;min-height:220px}
-#message{color:#ffd5a1}
-footer{text-align:center;color:#888;margin:30px 0}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #101018;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  text-align: center;
+  padding: 25px 0;
+}
+
+h1 {
+  color: #e8b4ff;
+}
+
+.subtitle {
+  color: #c9c1d5;
+}
+
+.card {
+  max-width: 700px;
+  margin: 20px auto;
+  padding: 22px;
+  background: #1c1c29;
+  border-radius: 16px;
+}
+
+input {
+  width: 100%;
+  padding: 13px;
+  margin: 10px 0;
+  border: 1px solid #555;
+  border-radius: 9px;
+  background: #101018;
+  color: white;
+}
+
+button {
+  padding: 12px 18px;
+  background: #c58af0;
+  color: #170d20;
+  border: none;
+  border-radius: 9px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.movie {
+  padding: 15px;
+  margin: 12px 0;
+  background: #292638;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.movie button {
+  margin-top: 8px;
+}
+
+#player, #embed {
+  display: none;
+  width: 100%;
+  min-height: 230px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 12px;
+  background: black;
+}
+
+#status {
+  color: #e8b4ff;
+  overflow-wrap: anywhere;
+}
+
+footer {
+  text-align: center;
+  color: #aaa;
+  margin: 35px 0;
+}
 </style>
 </head>
 
 <body>
+
 <header>
-<h1>🎬 sawako Private Cinema</h1>
-<p>Your personal video corner 🤍</p>
+  <h1>🎬 Sawako's Private Cinema</h1>
+  <p class="subtitle">Your little world of movies 🌸</p>
 </header>
 
 <div class="card">
-<h2>▶ Watch a Video</h2>
-<p>Paste a direct video link, YouTube link, or Google Drive link.</p>
-
-<input id="videoLink" type="url" placeholder="Paste video link here">
-<button onclick="playVideo()">Play Video</button>
-
-<video id="player" controls playsinline style="display:none"></video>
-<iframe id="embed" style="display:none" allowfullscreen></iframe>
-
-<p id="message"></p>
-<a id="openLink" class="openLink" href="#" target="_blank" rel="noopener" style="display:none">Open / Download in Drive</a>
+  <h2>🍿 Movie Library</h2>
+  <p id="status">Loading movies...</p>
+  <div id="movieList"></div>
 </div>
 
-<footer>Made for sawako 🤍</footer>
+<div class="card">
+  <h2>▶️ Watch a Movie</h2>
+  <p>Paste a supported video link below.</p>
+
+  <input
+    id="videoLink"
+    type="url"
+    placeholder="Paste movie link here"
+  >
+
+  <button onclick="playMovie(document.getElementById('videoLink').value)">
+    Play Movie
+  </button>
+
+  <video id="player" controls playsinline></video>
+  <iframe
+    id="embed"
+    allowfullscreen
+    allow="autoplay; fullscreen; picture-in-picture"
+    referrerpolicy="strict-origin-when-cross-origin"
+  ></iframe>
+
+  <p id="playStatus"></p>
+</div>
+
+<footer>
+  Made with 🤍 for movie lovers
+</footer>
 
 <script>
-function playVideo(){
- const link=document.getElementById('videoLink').value.trim();
- const player=document.getElementById('player');
- const embed=document.getElementById('embed');
- const message=document.getElementById('message');
- const openLink=document.getElementById('openLink');
+/*
+  Replace the two placeholders below with your own
+  Supabase Project URL and Publishable Key.
+*/
 
- player.style.display='none';
- embed.style.display='none';
- player.removeAttribute('src');
- embed.removeAttribute('src');
- openLink.style.display='none';
- message.textContent='';
+const SUPABASE_URL = https://fpdzluwvwgzflygqukfa.supabase.co/rest/v1/;
+const SUPABASE_PUBLISHABLE_KEY = sb_publishable_qEjg2u3zBGqk3Jl_KVXS8Q_EJT5ifAt;
 
- if(!link){
-   message.textContent='Please paste a video link.';
-   return;
- }
+const statusBox = document.getElementById("status");
+const movieList = document.getElementById("movieList");
 
- try{
-   const url=new URL(link);
+let db = null;
 
-   if(url.protocol!=='https:' && url.protocol!=='http:'){
-     message.textContent='Please use a valid web link.';
-     return;
-   }
+function playMovie(rawUrl) {
+  const video = document.getElementById("player");
+  const embed = document.getElementById("embed");
+  const message = document.getElementById("playStatus");
 
-   if(url.hostname==='drive.google.com' || url.hostname==='www.drive.google.com'){
-     let id='';
-     const match=url.pathname.match(/\/file\/d\/([^/]+)/);
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
 
-     if(match) id=match[1];
-     else id=url.searchParams.get('id') || '';
+  embed.removeAttribute("src");
+  video.style.display = "none";
+  embed.style.display = "none";
+  message.textContent = "";
 
-     if(!id){
-       message.textContent='Google Drive file ID nahi mila. File ka sharing link check karo.';
-       return;
-     }
+  try {
+    const url = new URL(rawUrl.trim());
 
-     embed.src='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
-     embed.style.display='block';
+    if (!["https:", "http:"].includes(url.protocol)) {
+      throw new Error("Invalid link");
+    }
 
-     openLink.href='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view';
-     openLink.style.display='inline-block';
-
-     message.textContent='Agar video play na ho, Drive sharing permission check karo.';
-   }
-   else if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(url.href)){
-     player.src=url.href;
-     player.style.display='block';
-     player.load();
-     player.play().catch(()=>{});
-   }
-   else if(url.hostname==='youtu.be' || url.hostname.endsWith('youtube.com')){
-     let id='';
-
-     if(url.hostname==='youtu.be') id=url.pathname.slice(1);
-     else if(url.pathname==='/watch') id=url.searchParams.get('v') || '';
-     else if(url.pathname.startsWith('/embed/')) id=url.pathname.split('/')[2];
-     else if(url.pathname.startsWith('/shorts/')) id=url.pathname.split('/')[2];
-
-     if(!id){
-       message.textContent='This YouTube link format is not supported.';
-       return;
-     }
-
-     embed.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id);
-     embed.style.display='block';
-   }
-   else{
-     message.textContent='This link may not support playback. Try Google Drive or a direct MP4 link.';
-   }
- }
- catch(e){
-   message.textContent='Please paste a valid video URL.';
- }
-}
-</script>
-</body>
-</html>
+    const
