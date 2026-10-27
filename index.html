@@ -1,177 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Sawako's Private Cinema 🎬</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 20px;
-  background: #101018;
-  color: white;
-  font-family: Arial, sans-serif;
-}
-
-header {
-  text-align: center;
-  padding: 25px 0;
-}
-
-h1 {
-  color: #e8b4ff;
-}
-
-.subtitle {
-  color: #c9c1d5;
-}
-
-.card {
-  max-width: 700px;
-  margin: 20px auto;
-  padding: 22px;
-  background: #1c1c29;
-  border-radius: 16px;
-}
-
-input {
-  width: 100%;
-  padding: 13px;
-  margin: 10px 0;
-  border: 1px solid #555;
-  border-radius: 9px;
-  background: #101018;
-  color: white;
-}
-
-button {
-  padding: 12px 18px;
-  background: #c58af0;
-  color: #170d20;
-  border: none;
-  border-radius: 9px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.movie {
-  padding: 15px;
-  margin: 12px 0;
-  background: #292638;
-  border-radius: 12px;
-  overflow-wrap: anywhere;
-}
-
-.movie button {
-  margin-top: 8px;
-}
-
-#player, #embed {
-  display: none;
-  width: 100%;
-  min-height: 230px;
-  margin-top: 18px;
-  border: none;
-  border-radius: 12px;
-  background: black;
-}
-
-#status {
-  color: #e8b4ff;
-  overflow-wrap: anywhere;
-}
-
-footer {
-  text-align: center;
-  color: #aaa;
-  margin: 35px 0;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h1>🎬 Sawako's Private Cinema</h1>
-  <p class="subtitle">Your little world of movies 🌸</p>
-</header>
-
-<div class="card">
-  <h2>🍿 Movie Library</h2>
-  <p id="status">Loading movies...</p>
-  <div id="movieList"></div>
-</div>
-
-<div class="card">
-  <h2>▶️ Watch a Movie</h2>
-  <p>Paste a supported video link below.</p>
-
-  <input
-    id="videoLink"
-    type="url"
-    placeholder="Paste movie link here"
-  >
-
-  <button onclick="playMovie(document.getElementById('videoLink').value)">
-    Play Movie
-  </button>
-
-  <video id="player" controls playsinline></video>
-  <iframe
-    id="embed"
-    allowfullscreen
-    allow="autoplay; fullscreen; picture-in-picture"
-    referrerpolicy="strict-origin-when-cross-origin"
-  ></iframe>
-
-  <p id="playStatus"></p>
-</div>
-
-<footer>
-  Made with 🤍 for movie lovers
-</footer>
-
-<script>
-/*
-  Replace the two placeholders below with your own
-  Supabase Project URL and Publishable Key.
-*/
-
-const SUPABASE_URL = “https://fpdzluwvwgzflygqukfa.supabase.co/rest/v1/”;
-const SUPABASE_PUBLISHABLE_KEY = “sb_publishable_qEjg2u3zBGqk3Jl_KVXS8Q_EJT5ifAt”;
-
-const statusBox = document.getElementById("status");
-const movieList = document.getElementById("movieList");
-
-let db = null;
-
-function playMovie(rawUrl) {
-  const video = document.getElementById("player");
-  const embed = document.getElementById("embed");
-  const message = document.getElementById("playStatus");
-
-  video.pause();
-  video.removeAttribute("src");
-  video.load();
-
-  embed.removeAttribute("src");
-  video.style.display = "none";
-  embed.style.display = "none";
-  message.textContent = "";
-
-  try {
-    const url = new URL(rawUrl.trim());
-
-    if (!["https:", "http:"].includes(url.protocol)) {
-      throw new Error("Invalid link");
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sawako's Private Cinema</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #17151d;
+      color: #f8edf4;
+      font-family: Arial, sans-serif;
     }
+    header {
+      text-align: center;
+      padding: 25px 10px;
+    }
+    h1 { color: #f3a9cc; }
+    .subtitle { color: #c9b8c5; }
+    .box {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 18px;
+      background: #27222e;
+      border-radius: 14px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input { background: #fff; color: #222; }
+    button {
+      background: #e99bc3;
+      color: #271622;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .movie {
+      background: #352c3c;
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 10px;
+    }
+    .movie h3 { margin-top: 0; }
+    .status {
+      color: #f3c3dc;
+      overflow-wrap: anywhere;
+    }
+    video {
+      display: block;
+      width: 100%;
+      max-height: 450px;
+      margin-top: 12px;
+      background: #000;
+      border-radius: 10px;
+    }
+    footer {
+      text-align: center;
+      color: #b8a8b6;
+      margin: 30px 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sawako's Private Cinema 🎬</h1>
+    <p class="subtitle">A little world of movies ♡</p>
+  </header>
 
-    const
+  <section class="box">
+    <h2>Movie Library 🍿</h2>
+    <p id="status" class="status">Loading movies...</p>
+    <div id="movies"></div>
+  </section>
+
+  <section class="box">
+    <h2>Play a Video</h2>
+    <p>Enter a direct video file link to play it here.</p>
+    <input id="videoLink" type="url" placeholder="Paste direct video URL">
+    <button onclick="playVideo()">Play Video</button>
+    <video id="player" controls playsinline></video>
+    <p id="videoStatus" class="status"></p>
+  </section>
+
+  <footer>Made with ♡ for movie lovers</footer>
+
+  <script>
+    const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+    const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SB_PUBLISHABLE_KEY_HERE";
+
+    const statusBox = document.getElementById("status");
+    const moviesBox = document.getElementById("movies");
+
+    async function loadMovies() {
+      statusBox.textContent = "Loading movies...";
+      moviesBox.innerHTML = "";
+
+      try {
+        if (
+          SUPABASE_URL.includes("PASTE_") ||
+          SUPABASE_PUBLISHABLE_KEY.includes("PASTE_")
+        ) {
+          throw new Error("Supabase URL ya Publishable Key add nahi hui.");
+        }
+
+        const client = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
+
+        const { data, error } = await client
+          .from("movies")
+          .select("id, title, movie_url")
+          .order("id", { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          statusBox.textContent = "Abhi koi movie add nahi hai.";
+          return;
+        }
+
+        statusBox.textContent = data.length + " movie(s) found.";
+
+        data.forEach(function(movie) {
+          const card = document.createElement("div");
+          card.className = "movie";
+
+          const title = document.createElement("h3");
+          title.textContent = movie.title || "Untitled Movie";
+          card.appendChild(title);
+
+          const playButton = document.createElement("button");
+          playButton.textContent = "▶ Play Movie";
+          playButton.onclick = function() {
+            const player = document.getElementById("player");
+            player.src = movie.movie_url;
+            player.load();
+            player.play().catch(function() {
+              document.getElementById("videoStatus").textContent =
+                "Video play nahi hui. Direct video file link chahiye.";
+            });
+            player.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+          };
+
+          card.appendChild(playButton);
+          moviesBox.appendChild(card);
+        });
+
+      } catch (error) {
+        statusBox.textContent = "Error: " + error.message;
+      }
+    }
